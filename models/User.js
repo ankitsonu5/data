@@ -111,7 +111,8 @@ userSchema.virtual('id').get(function() {
 userSchema.set('toJSON', {
     virtuals: true,
     transform: function(doc, ret) {
-        delete ret._id;
+        // Keep _id for frontend compatibility (_id is widely used in Angular components)
+        // delete ret._id;
         delete ret.__v;
         delete ret.password;
         delete ret.resetPasswordToken;

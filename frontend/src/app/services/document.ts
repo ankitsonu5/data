@@ -181,7 +181,8 @@ export class DocumentService {
 
   // Category CRUD Operations
   getCategories(): Observable<ApiResponse<Category[]>> {
-    return this.http.get<ApiResponse<Category[]>>(`${this.apiUrl}/categories`)
+    const params = new HttpParams().set('flat', 'true');
+    return this.http.get<ApiResponse<Category[]>>(`${this.apiUrl}/categories`, { params })
       .pipe(
         tap(response => {
           if (response.success) {

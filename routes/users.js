@@ -116,7 +116,7 @@ router.get('/:id', async (req, res) => {
 // @route   POST /api/users
 // @access  Private (Admin only)
 router.post('/',
-    authorize('admin'),
+    authorize('admin', 'manager'),
     validateRequest([
         body('name').trim().isLength({ min: 2, max: 50 }).withMessage('Name must be between 2 and 50 characters'),
         body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email'),
@@ -137,7 +137,15 @@ router.post('/',
                     error: 'User already exists with this email'
                 });
             }
-            
+
+            // Managers are not allowed to create Admin users
+            if (req.user.role === 'manager' && role === 'admin') {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Managers cannot create Admin users'
+                });
+            }
+
             // Create user
             const user = await User.create({
                 name,
@@ -327,7 +335,7 @@ router.get('/:id/activity', async (req, res) => {
 // @route   POST /api/users/:id/reset-password
 // @access  Private (Admin/Manager)
 router.post('/:id/reset-password',
-    authorize(['admin', 'manager']),
+    authorize('admin', 'manager'),
     auditLog('password_reset', 'user'),
     async (req, res) => {
         try {

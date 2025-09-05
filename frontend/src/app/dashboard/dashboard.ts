@@ -8,10 +8,11 @@ import { UserService } from '../services/user.service';
 import { UserManagement } from '../users/user-management/user-management';
 import { DocumentList } from '../documents/document-list/document-list';
 import { DocumentUpload } from '../documents/document-upload/document-upload';
+import { CategoryManagement } from '../categories/category-management/category-management';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, UserManagement, DocumentList, DocumentUpload],
+  imports: [CommonModule, UserManagement, DocumentList, DocumentUpload, CategoryManagement],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })

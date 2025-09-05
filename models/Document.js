@@ -188,7 +188,8 @@ documentSchema.pre('save', function(next) {
 documentSchema.set('toJSON', {
     virtuals: true,
     transform: function(doc, ret) {
-        delete ret._id;
+        // Keep _id for frontend compatibility
+        // delete ret._id;
         delete ret.__v;
         return ret;
     }

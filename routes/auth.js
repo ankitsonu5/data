@@ -133,6 +133,7 @@ router.post('/login',
                 message: 'Login successful',
                 data: {
                     user: {
+                        _id: user._id,
                         id: user.id,
                         name: user.name,
                         email: user.email,
@@ -164,6 +165,7 @@ router.get('/me', protect, async (req, res) => {
             success: true,
             data: {
                 user: {
+                    _id: user._id,
                     id: user.id,
                     name: user.name,
                     email: user.email,
