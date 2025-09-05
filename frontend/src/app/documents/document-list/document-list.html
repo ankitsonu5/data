@@ -1,0 +1,371 @@
+<div class="document-list-container">
+  <!-- Header Section -->
+  <div class="list-header">
+    <div class="row align-items-center">
+      <div class="col-12 col-md-6">
+        <h2>
+          <i class="fas fa-file-alt"></i>
+          Document Management
+        </h2>
+        <p class="text-muted">Manage and organize your documents</p>
+      </div>
+      <div class="col-12 col-md-6 text-md-end">
+        <button class="btn btn-primary" (click)="openUploadModal()">
+          <i class="fas fa-upload"></i>
+          Upload Document
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section card">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-12 col-md-4">
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fas fa-search"></i>
+              Search Documents
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Search by title, description..."
+              [(ngModel)]="filters.search"
+              (input)="onFilterChange()"
+            >
+          </div>
+        </div>
+        <div class="col-12 col-md-3">
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fas fa-folder"></i>
+              Category
+            </label>
+            <select
+              class="form-control"
+              [(ngModel)]="filters.category"
+              (change)="onFilterChange()"
+            >
+              <option value="">All Categories</option>
+              <option *ngFor="let category of categories" [value]="category._id">
+                {{ category.name }}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="col-12 col-md-3">
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fas fa-flag"></i>
+              Status
+            </label>
+            <select
+              class="form-control"
+              [(ngModel)]="filters.status"
+              (change)="onFilterChange()"
+            >
+              <option value="">All Status</option>
+              <option value="draft">Draft</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-12 col-md-2">
+          <div class="form-group">
+            <label class="form-label">Actions</label>
+            <div class="btn-group w-100">
+              <button class="btn btn-outline-secondary btn-sm" (click)="clearFilters()">
+                <i class="fas fa-times"></i>
+                Clear
+              </button>
+              <button class="btn btn-outline-primary btn-sm" (click)="exportDocuments()">
+                <i class="fas fa-download"></i>
+                Export
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="text-center py-4" *ngIf="loading">
+    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+    <p class="mt-2">Loading documents...</p>
+  </div>
+
+  <!-- Documents Grid/List -->
+  <div class="documents-section" *ngIf="!loading">
+    <!-- View Toggle -->
+    <div class="view-controls mb-3">
+      <div class="row align-items-center">
+        <div class="col-12 col-md-6">
+          <span class="text-muted">
+            Showing {{ documents.length }} of {{ totalDocuments }} documents
+          </span>
+        </div>
+        <div class="col-12 col-md-6 text-md-end">
+          <div class="btn-group">
+            <button
+              class="btn btn-outline-secondary btn-sm"
+              [class.active]="viewMode === 'grid'"
+              (click)="setViewMode('grid')"
+            >
+              <i class="fas fa-th"></i>
+              Grid
+            </button>
+            <button
+              class="btn btn-outline-secondary btn-sm"
+              [class.active]="viewMode === 'list'"
+              (click)="setViewMode('list')"
+            >
+              <i class="fas fa-list"></i>
+              List
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid View -->
+    <div class="documents-grid" *ngIf="viewMode === 'grid'">
+      <div class="row">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3" *ngFor="let document of documents">
+          <div class="document-card">
+            <div class="document-icon">
+              <i [class]="getFileIcon(document.mimetype)"></i>
+            </div>
+            <div class="document-info">
+              <h6 class="document-title" [title]="document.title">{{ document.title }}</h6>
+              <p class="document-meta">
+                <small class="text-muted">
+                  {{ formatFileSize(document.size) }} •
+                  {{ document.createdAt | date:'short' }}
+                </small>
+              </p>
+              <div class="document-status">
+                <span class="badge" [class]="'badge-' + getStatusColor(document.status)">
+                  <i [class]="getStatusIcon(document.status)"></i>
+                  {{ document.status | titlecase }}
+                </span>
+              </div>
+            </div>
+            <div class="document-actions">
+              <button class="btn btn-sm btn-outline-primary" (click)="viewDocument(document)">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-success" (click)="downloadDocument(document)">
+                <i class="fas fa-download"></i>
+              </button>
+              <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item" (click)="editDocument(document)">
+                    <i class="fas fa-edit"></i> Edit
+                  </a></li>
+                  <li><a class="dropdown-item" (click)="shareDocument(document)">
+                    <i class="fas fa-share"></i> Share
+                  </a></li>
+                  <li *ngIf="canApprove(document)"><a class="dropdown-item" (click)="approveDocument(document)">
+                    <i class="fas fa-check"></i> Approve
+                  </a></li>
+                  <li *ngIf="canReject(document)"><a class="dropdown-item" (click)="rejectDocument(document)">
+                    <i class="fas fa-times"></i> Reject
+                  </a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" (click)="deleteDocument(document)">
+                    <i class="fas fa-trash"></i> Delete
+                  </a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- List View -->
+    <div class="documents-table" *ngIf="viewMode === 'list'">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>
+                <input
+                  type="checkbox"
+                  [checked]="selectedDocuments.length === documents.length && documents.length > 0"
+                  (change)="selectedDocuments.length === documents.length ? clearSelection() : selectAllDocuments()"
+                >
+              </th>
+              <th (click)="onSortChange('title')" class="sortable">
+                <i class="fas fa-file-alt"></i>
+                Document
+                <i [class]="getSortIcon('title')"></i>
+              </th>
+              <th (click)="onSortChange('category')" class="sortable">
+                Category
+                <i [class]="getSortIcon('category')"></i>
+              </th>
+              <th (click)="onSortChange('status')" class="sortable">
+                Status
+                <i [class]="getSortIcon('status')"></i>
+              </th>
+              <th (click)="onSortChange('size')" class="sortable">
+                Size
+                <i [class]="getSortIcon('size')"></i>
+              </th>
+              <th (click)="onSortChange('createdAt')" class="sortable">
+                Created
+                <i [class]="getSortIcon('createdAt')"></i>
+              </th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let document of documents">
+              <td>
+                <input
+                  type="checkbox"
+                  [checked]="isDocumentSelected(document._id)"
+                  (change)="toggleDocumentSelection(document._id)"
+                >
+              </td>
+              <td>
+                <div class="document-info">
+                  <i [class]="getFileIcon(document.mimetype)" class="file-icon"></i>
+                  <div>
+                    <strong>{{ document.title }}</strong>
+                    <br>
+                    <small class="text-muted">{{ document.originalName }}</small>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="badge badge-secondary">{{ document.category.name }}</span>
+              </td>
+              <td>
+                <span class="badge" [class]="'badge-' + getStatusColor(document.status)">
+                  <i [class]="getStatusIcon(document.status)"></i>
+                  {{ document.status | titlecase }}
+                </span>
+              </td>
+              <td>{{ formatFileSize(document.size) }}</td>
+              <td>{{ document.createdAt | date:'short' }}</td>
+              <td>
+                <div class="btn-group">
+                  <button class="btn btn-sm btn-outline-primary" (click)="viewDocument(document)">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-success" (click)="downloadDocument(document)">
+                    <i class="fas fa-download"></i>
+                  </button>
+                  <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                      <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                      <li *ngIf="canEdit(document)"><a class="dropdown-item" (click)="editDocument(document)">
+                        <i class="fas fa-edit"></i> Edit
+                      </a></li>
+                      <li><a class="dropdown-item" (click)="shareDocument(document)">
+                        <i class="fas fa-share"></i> Share
+                      </a></li>
+                      <li *ngIf="canApprove(document)"><a class="dropdown-item" (click)="approveDocument(document)">
+                        <i class="fas fa-check"></i> Approve
+                      </a></li>
+                      <li *ngIf="canReject(document)"><a class="dropdown-item" (click)="rejectDocument(document)">
+                        <i class="fas fa-times"></i> Reject
+                      </a></li>
+                      <li *ngIf="canDelete(document)"><hr class="dropdown-divider"></li>
+                      <li *ngIf="canDelete(document)"><a class="dropdown-item text-danger" (click)="deleteDocument(document)">
+                        <i class="fas fa-trash"></i> Delete
+                      </a></li>
+                    </ul>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state text-center py-5" *ngIf="documents.length === 0 && !loading">
+      <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+      <h4>No Documents Found</h4>
+      <p class="text-muted">
+        <span *ngIf="filters.search || filters.category || filters.status">
+          No documents match your current filters. Try adjusting your search criteria.
+        </span>
+        <span *ngIf="!filters.search && !filters.category && !filters.status">
+          You haven't uploaded any documents yet. Click the upload button to get started.
+        </span>
+      </p>
+      <button class="btn btn-primary" (click)="openUploadModal()">
+        <i class="fas fa-upload"></i>
+        Upload Your First Document
+      </button>
+    </div>
+
+    <!-- Bulk Actions Bar -->
+    <div class="bulk-actions-bar" *ngIf="selectedDocuments.length > 0">
+      <div class="row align-items-center">
+        <div class="col-12 col-md-6">
+          <span class="selected-count">
+            {{ selectedDocuments.length }} document(s) selected
+          </span>
+        </div>
+        <div class="col-12 col-md-6 text-md-end">
+          <div class="btn-group">
+            <button class="btn btn-success btn-sm" (click)="bulkApprove()" *ngIf="currentUser?.role !== 'user'">
+              <i class="fas fa-check"></i>
+              Approve
+            </button>
+            <button class="btn btn-warning btn-sm" (click)="bulkReject()" *ngIf="currentUser?.role !== 'user'">
+              <i class="fas fa-times"></i>
+              Reject
+            </button>
+            <button class="btn btn-danger btn-sm" (click)="bulkDelete()">
+              <i class="fas fa-trash"></i>
+              Delete
+            </button>
+            <button class="btn btn-secondary btn-sm" (click)="clearSelection()">
+              <i class="fas fa-times"></i>
+              Clear
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-section" *ngIf="totalDocuments > filters.limit!">
+      <nav aria-label="Document pagination">
+        <ul class="pagination justify-content-center">
+          <li class="page-item" [class.disabled]="filters.page === 1">
+            <a class="page-link" (click)="onPageChange(filters.page! - 1)">
+              <i class="fas fa-chevron-left"></i>
+            </a>
+          </li>
+          <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === filters.page">
+            <a class="page-link" (click)="onPageChange(page)">{{ page }}</a>
+          </li>
+          <li class="page-item" [class.disabled]="filters.page === getTotalPages()">
+            <a class="page-link" (click)="onPageChange(filters.page! + 1)">
+              <i class="fas fa-chevron-right"></i>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>

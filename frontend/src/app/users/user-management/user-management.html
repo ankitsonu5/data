@@ -1,0 +1,486 @@
+<div class="user-management-container">
+  <!-- Header Section -->
+  <div class="management-header">
+    <div class="row align-items-center">
+      <div class="col-12 col-md-6">
+        <h2>
+          <i class="fas fa-users"></i>
+          User Management
+        </h2>
+        <p class="text-muted">Manage system users and permissions</p>
+      </div>
+      <div class="col-12 col-md-6 text-md-end">
+        <button class="btn btn-primary" (click)="openAddModal()">
+          <i class="fas fa-user-plus"></i>
+          Add New User
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section card">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-12 col-md-3">
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fas fa-search"></i>
+              Search Users
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Search by name, email..."
+              [(ngModel)]="filters.search"
+              (input)="onFilterChange()"
+            >
+          </div>
+        </div>
+        <div class="col-12 col-md-2">
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fas fa-user-tag"></i>
+              Role
+            </label>
+            <select
+              class="form-control"
+              [(ngModel)]="filters.role"
+              (change)="onFilterChange()"
+            >
+              <option value="">All Roles</option>
+              <option value="admin">Admin</option>
+              <option value="manager">Manager</option>
+              <option value="user">User</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-12 col-md-2">
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fas fa-building"></i>
+              Department
+            </label>
+            <select
+              class="form-control"
+              [(ngModel)]="filters.department"
+              (change)="onFilterChange()"
+            >
+              <option value="">All Departments</option>
+              <option value="HR">HR</option>
+              <option value="Finance">Finance</option>
+              <option value="IT">IT</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Operations">Operations</option>
+              <option value="Legal">Legal</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-12 col-md-2">
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fas fa-toggle-on"></i>
+              Status
+            </label>
+            <select
+              class="form-control"
+              [(ngModel)]="filters.status"
+              (change)="onFilterChange()"
+            >
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-12 col-md-3">
+          <div class="form-group">
+            <label class="form-label">Actions</label>
+            <div class="btn-group w-100">
+              <button class="btn btn-outline-secondary btn-sm" (click)="clearFilters()">
+                <i class="fas fa-times"></i>
+                Clear
+              </button>
+              <button class="btn btn-outline-primary btn-sm" (click)="loadUsers()">
+                <i class="fas fa-sync"></i>
+                Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="text-center py-4" *ngIf="loading">
+    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+    <p class="mt-2">Loading users...</p>
+  </div>
+
+  <!-- Users Table -->
+  <div class="users-section" *ngIf="!loading">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th (click)="onSortChange('name')" class="sortable">
+              <i class="fas fa-user"></i>
+              User
+              <i [class]="getSortIcon('name')"></i>
+            </th>
+            <th (click)="onSortChange('email')" class="sortable">
+              Email
+              <i [class]="getSortIcon('email')"></i>
+            </th>
+            <th (click)="onSortChange('role')" class="sortable">
+              Role
+              <i [class]="getSortIcon('role')"></i>
+            </th>
+            <th (click)="onSortChange('department')" class="sortable">
+              Department
+              <i [class]="getSortIcon('department')"></i>
+            </th>
+            <th (click)="onSortChange('status')" class="sortable">
+              Status
+              <i [class]="getSortIcon('status')"></i>
+            </th>
+            <th (click)="onSortChange('createdAt')" class="sortable">
+              Created
+              <i [class]="getSortIcon('createdAt')"></i>
+            </th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of users">
+            <td>
+              <div class="user-info">
+                <div class="user-avatar">
+                  <i class="fas fa-user-circle"></i>
+                </div>
+                <div>
+                  <strong>{{ user.name }}</strong>
+                  <br>
+                  <small class="text-muted" *ngIf="user.phone">{{ user.phone }}</small>
+                </div>
+              </div>
+            </td>
+            <td>{{ user.email }}</td>
+            <td>
+              <span class="badge" [class]="getRoleBadgeClass(user.role)">
+                {{ user.role | titlecase }}
+              </span>
+            </td>
+            <td>{{ user.department || '-' }}</td>
+            <td>
+              <span class="badge" [class]="getStatusBadgeClass(user.status)">
+                {{ user.status | titlecase }}
+              </span>
+            </td>
+            <td>{{ user.createdAt | date:'short' }}</td>
+            <td>
+              <div class="btn-group">
+                <button
+                  class="btn btn-sm btn-outline-primary"
+                  (click)="openEditModal(user)"
+                  *ngIf="canEditUser(user)"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button
+                  class="btn btn-sm"
+                  [class]="user.status === 'active' ? 'btn-outline-warning' : 'btn-outline-success'"
+                  (click)="toggleUserStatus(user)"
+                  *ngIf="canEditUser(user)"
+                >
+                  <i [class]="user.status === 'active' ? 'fas fa-pause' : 'fas fa-play'"></i>
+                </button>
+                <button
+                  class="btn btn-sm btn-outline-info"
+                  (click)="resetPassword(user)"
+                  *ngIf="canEditUser(user)"
+                >
+                  <i class="fas fa-key"></i>
+                </button>
+                <button
+                  class="btn btn-sm btn-outline-danger"
+                  (click)="deleteUser(user)"
+                  *ngIf="canDeleteUser(user)"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state text-center py-5" *ngIf="users.length === 0">
+      <i class="fas fa-users fa-3x text-muted mb-3"></i>
+      <h4>No Users Found</h4>
+      <p class="text-muted">
+        <span *ngIf="filters.search || filters.role || filters.department">
+          No users match your current filters.
+        </span>
+        <span *ngIf="!filters.search && !filters.role && !filters.department">
+          No users have been created yet.
+        </span>
+      </p>
+      <button class="btn btn-primary" (click)="openAddModal()">
+        <i class="fas fa-user-plus"></i>
+        Add First User
+      </button>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-section" *ngIf="totalUsers > filters.limit!">
+      <nav aria-label="User pagination">
+        <ul class="pagination justify-content-center">
+          <li class="page-item" [class.disabled]="filters.page === 1">
+            <a class="page-link" (click)="onPageChange(filters.page! - 1)">
+              <i class="fas fa-chevron-left"></i>
+            </a>
+          </li>
+          <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === filters.page">
+            <a class="page-link" (click)="onPageChange(page)">{{ page }}</a>
+          </li>
+          <li class="page-item" [class.disabled]="filters.page === getTotalPages()">
+            <a class="page-link" (click)="onPageChange(filters.page! + 1)">
+              <i class="fas fa-chevron-right"></i>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal fade" [class.show]="showAddModal" [style.display]="showAddModal ? 'block' : 'none'" *ngIf="showAddModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-user-plus"></i>
+          Add New User
+        </h5>
+        <button type="button" class="btn-close" (click)="closeAddModal()"></button>
+      </div>
+      <form [formGroup]="userForm" (ngSubmit)="onAddUser()">
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-12 col-md-6">
+              <div class="form-group">
+                <label class="form-label">Full Name *</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  formControlName="name"
+                  [class.is-invalid]="isFieldInvalid(userForm, 'name')"
+                  placeholder="Enter full name"
+                >
+                <div class="invalid-feedback" *ngIf="isFieldInvalid(userForm, 'name')">
+                  {{ getFieldError(userForm, 'name') }}
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="form-group">
+                <label class="form-label">Email Address *</label>
+                <input
+                  type="email"
+                  class="form-control"
+                  formControlName="email"
+                  [class.is-invalid]="isFieldInvalid(userForm, 'email')"
+                  placeholder="Enter email address"
+                >
+                <div class="invalid-feedback" *ngIf="isFieldInvalid(userForm, 'email')">
+                  {{ getFieldError(userForm, 'email') }}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12 col-md-6">
+              <div class="form-group">
+                <label class="form-label">Password *</label>
+                <input
+                  type="password"
+                  class="form-control"
+                  formControlName="password"
+                  [class.is-invalid]="isFieldInvalid(userForm, 'password')"
+                  placeholder="Enter password"
+                >
+                <div class="invalid-feedback" *ngIf="isFieldInvalid(userForm, 'password')">
+                  {{ getFieldError(userForm, 'password') }}
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="form-group">
+                <label class="form-label">Phone Number</label>
+                <input
+                  type="tel"
+                  class="form-control"
+                  formControlName="phone"
+                  placeholder="Enter phone number"
+                >
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12 col-md-4">
+              <div class="form-group">
+                <label class="form-label">Role *</label>
+                <select class="form-control" formControlName="role">
+                  <option value="user">User</option>
+                  <option value="manager">Manager</option>
+                  <option value="admin" *ngIf="currentUser?.role === 'admin'">Admin</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="form-group">
+                <label class="form-label">Department</label>
+                <select class="form-control" formControlName="department">
+                  <option value="">Select Department</option>
+                  <option value="HR">Human Resources</option>
+                  <option value="Finance">Finance</option>
+                  <option value="IT">Information Technology</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="Operations">Operations</option>
+                  <option value="Legal">Legal</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="form-group">
+                <label class="form-label">Status *</label>
+                <select class="form-control" formControlName="status">
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="userForm.invalid">
+            <i class="fas fa-user-plus"></i>
+            Add User
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" [class.show]="showEditModal" [style.display]="showEditModal ? 'block' : 'none'" *ngIf="showEditModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-user-edit"></i>
+          Edit User: {{ selectedUser?.name }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeEditModal()"></button>
+      </div>
+      <form [formGroup]="editForm" (ngSubmit)="onEditUser()">
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-12 col-md-6">
+              <div class="form-group">
+                <label class="form-label">Full Name *</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  formControlName="name"
+                  [class.is-invalid]="isFieldInvalid(editForm, 'name')"
+                >
+                <div class="invalid-feedback" *ngIf="isFieldInvalid(editForm, 'name')">
+                  {{ getFieldError(editForm, 'name') }}
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="form-group">
+                <label class="form-label">Email Address *</label>
+                <input
+                  type="email"
+                  class="form-control"
+                  formControlName="email"
+                  [class.is-invalid]="isFieldInvalid(editForm, 'email')"
+                >
+                <div class="invalid-feedback" *ngIf="isFieldInvalid(editForm, 'email')">
+                  {{ getFieldError(editForm, 'email') }}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12 col-md-6">
+              <div class="form-group">
+                <label class="form-label">Phone Number</label>
+                <input
+                  type="tel"
+                  class="form-control"
+                  formControlName="phone"
+                >
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="form-group">
+                <label class="form-label">Department</label>
+                <select class="form-control" formControlName="department">
+                  <option value="">Select Department</option>
+                  <option value="HR">Human Resources</option>
+                  <option value="Finance">Finance</option>
+                  <option value="IT">Information Technology</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="Operations">Operations</option>
+                  <option value="Legal">Legal</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12 col-md-6">
+              <div class="form-group">
+                <label class="form-label">Role *</label>
+                <select class="form-control" formControlName="role">
+                  <option value="user">User</option>
+                  <option value="manager">Manager</option>
+                  <option value="admin" *ngIf="currentUser?.role === 'admin'">Admin</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="form-group">
+                <label class="form-label">Status *</label>
+                <select class="form-control" formControlName="status">
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="editForm.invalid">
+            <i class="fas fa-save"></i>
+            Update User
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade show" *ngIf="showAddModal || showEditModal"></div>

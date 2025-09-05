@@ -1,0 +1,354 @@
+<div class="dashboard-container">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="container">
+      <div class="header-content">
+        <div class="brand-section">
+          <div class="brand-icon">
+            <i class="fas fa-file-alt"></i>
+          </div>
+          <div class="brand-info">
+            <h1 class="brand-title">Document Management System</h1>
+            <p class="brand-subtitle">Secure • Organized • Efficient</p>
+          </div>
+        </div>
+
+        <div class="user-section">
+          <div class="user-info">
+            <div class="user-avatar">
+              <i [class]="getUserIcon(currentUser?.role)"></i>
+            </div>
+            <div class="user-details d-none d-md-block">
+              <span class="welcome-text">Welcome back,</span>
+              <span class="user-name">{{ currentUser?.name }}</span>
+              <span class="user-role-badge" [class]="'role-' + currentUser?.role">
+                {{ currentUser?.role | titlecase }}
+              </span>
+            </div>
+          </div>
+
+          <div class="header-actions">
+            <button class="btn btn-outline-primary btn-sm d-none d-lg-block" (click)="showNotifications()">
+              <i class="fas fa-bell"></i>
+              <span class="notification-badge" *ngIf="notificationCount > 0">{{ notificationCount }}</span>
+            </button>
+            <button class="btn btn-outline-secondary btn-sm d-none d-md-block" (click)="showProfile()">
+              <i class="fas fa-cog"></i>
+              Settings
+            </button>
+            <button class="btn btn-danger btn-sm" (click)="logout()">
+              <i class="fas fa-sign-out-alt"></i>
+              <span class="d-none d-sm-inline">Logout</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav class="dashboard-nav">
+    <div class="container">
+      <div class="nav-content">
+        <!-- Mobile Menu Toggle -->
+        <button class="mobile-menu-toggle d-lg-none" (click)="toggleMobileMenu()">
+          <i class="fas fa-bars"></i>
+          <span class="menu-text">Menu</span>
+        </button>
+
+        <!-- Navigation Items -->
+        <div class="nav-items" [class.mobile-open]="mobileMenuOpen">
+          <button
+            class="nav-btn"
+            [class.active]="activeTab === 'dashboard'"
+            (click)="setActiveTab('dashboard')"
+          >
+            <i class="fas fa-tachometer-alt nav-icon"></i>
+            <span class="nav-text">Dashboard</span>
+          </button>
+          <button
+            class="nav-btn"
+            [class.active]="activeTab === 'documents'"
+            (click)="setActiveTab('documents')"
+          >
+            <i class="fas fa-file-alt nav-icon"></i>
+            <span class="nav-text">Documents</span>
+          </button>
+          <button
+            class="nav-btn"
+            [class.active]="activeTab === 'users'"
+            (click)="setActiveTab('users')"
+            *ngIf="currentUser?.role === 'admin' || currentUser?.role === 'manager'"
+          >
+            <i class="fas fa-users nav-icon"></i>
+            <span class="nav-text">Users</span>
+          </button>
+          <button
+            class="nav-btn"
+            [class.active]="activeTab === 'upload'"
+            (click)="setActiveTab('upload')"
+          >
+            <i class="fas fa-upload nav-icon"></i>
+            <span class="nav-text">Upload</span>
+          </button>
+          <button
+            class="nav-btn"
+            [class.active]="activeTab === 'categories'"
+            (click)="setActiveTab('categories')"
+            *ngIf="currentUser?.role === 'admin' || currentUser?.role === 'manager'"
+          >
+            <i class="fas fa-folder nav-icon"></i>
+            <span class="nav-text">Categories</span>
+          </button>
+
+          <button
+            class="nav-btn"
+            [class.active]="activeTab === 'reports'"
+            (click)="setActiveTab('reports')"
+            *ngIf="currentUser?.role === 'admin' || currentUser?.role === 'manager'"
+          >
+            <i class="fas fa-chart-line nav-icon"></i>
+            <span class="nav-text">Reports</span>
+          </button>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions d-none d-xl-flex">
+          <button class="quick-action-btn" (click)="quickUpload()" title="Quick Upload">
+            <i class="fas fa-bolt"></i>
+          </button>
+          <button class="quick-action-btn" (click)="quickSearch()" title="Quick Search">
+            <i class="fas fa-search"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="dashboard-main">
+    <div class="container">
+      <!-- Dashboard Overview -->
+      <div class="dashboard-overview" *ngIf="activeTab === 'dashboard'">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+          <div class="row align-items-center">
+            <div class="col-12 col-lg-8">
+              <h2 class="welcome-title">
+                Good {{ getTimeOfDay() }}, {{ currentUser?.name }}! 👋
+              </h2>
+              <p class="welcome-description">
+                Here's what's happening with your documents today.
+              </p>
+            </div>
+            <div class="col-12 col-lg-4 text-lg-end">
+              <div class="date-info">
+                <span class="current-date">{{ getCurrentDate() }}</span>
+                <span class="current-time">{{ getCurrentTime() }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-section">
+          <div class="row">
+            <div class="col-12 col-sm-6 col-lg-3">
+              <div class="stat-card primary">
+                <div class="stat-icon">
+                  <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="stat-info">
+                  <h3>Total Documents</h3>
+                  <p class="stat-number">{{ stats.totalDocuments }}</p>
+                  <span class="stat-change positive">+12% this month</span>
+                </div>
+                <div class="stat-action">
+                  <button class="btn btn-sm btn-outline-primary" (click)="setActiveTab('documents')">
+                    View All
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-3">
+              <div class="stat-card warning">
+                <div class="stat-icon">
+                  <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-info">
+                  <h3>Pending Approval</h3>
+                  <p class="stat-number">{{ stats.pendingDocuments }}</p>
+                  <span class="stat-change neutral">{{ stats.pendingDocuments }} waiting</span>
+                </div>
+                <div class="stat-action">
+                  <button class="btn btn-sm btn-outline-warning" (click)="viewPendingDocuments()">
+                    Review
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-3">
+              <div class="stat-card success">
+                <div class="stat-icon">
+                  <i class="fas fa-folder"></i>
+                </div>
+                <div class="stat-info">
+                  <h3>Categories</h3>
+                  <p class="stat-number">{{ stats.totalCategories }}</p>
+                  <span class="stat-change positive">Well organized</span>
+                </div>
+                <div class="stat-action">
+                  <button class="btn btn-sm btn-outline-success" (click)="setActiveTab('categories')">
+                    Manage
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-3" *ngIf="currentUser?.role === 'admin'">
+              <div class="stat-card info">
+                <div class="stat-icon">
+                  <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-info">
+                  <h3>Active Users</h3>
+                  <p class="stat-number">{{ stats.totalUsers }}</p>
+                  <span class="stat-change positive">{{ getActiveUsersToday() }} online today</span>
+                </div>
+                <div class="stat-action">
+                  <button class="btn btn-sm btn-outline-info" (click)="setActiveTab('users')">
+                    Manage
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity & Quick Actions -->
+        <div class="row">
+          <div class="col-12 col-lg-8">
+            <div class="recent-activity card">
+              <div class="card-header">
+                <h3>Recent Activity</h3>
+                <button class="btn btn-sm btn-outline-primary" (click)="viewAllActivity()">
+                  View All
+                </button>
+              </div>
+              <div class="card-body">
+                <div class="activity-list">
+                  <div class="activity-item" *ngFor="let activity of recentActivity">
+                    <div class="activity-icon">
+                      <i [class]="getActivityIcon(activity.action)"></i>
+                    </div>
+                    <div class="activity-details">
+                      <p class="activity-text">{{ activity.description }}</p>
+                      <span class="activity-time">{{ activity.timestamp | date:'short' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-lg-4">
+            <div class="quick-actions-panel card">
+              <div class="card-header">
+                <h3>Quick Actions</h3>
+              </div>
+              <div class="card-body">
+                <div class="quick-actions-grid">
+                  <button class="quick-action-card" (click)="setActiveTab('upload')">
+                    <i class="fas fa-upload action-icon"></i>
+                    <span class="action-text">Upload Document</span>
+                  </button>
+                  <button class="quick-action-card" (click)="createCategory()" *ngIf="currentUser?.role === 'admin'">
+                    <i class="fas fa-folder-plus action-icon"></i>
+                    <span class="action-text">New Category</span>
+                  </button>
+                  <button class="quick-action-card" (click)="generateReport()" *ngIf="currentUser?.role !== 'user'">
+                    <i class="fas fa-chart-bar action-icon"></i>
+                    <span class="action-text">Generate Report</span>
+                  </button>
+                  <button class="quick-action-card" (click)="viewSettings()">
+                    <i class="fas fa-cog action-icon"></i>
+                    <span class="action-text">Settings</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Document List -->
+      <div class="content-section" *ngIf="activeTab === 'documents'">
+        <div class="section-header">
+          <h2>Document Management</h2>
+          <div class="section-actions">
+            <button class="btn btn-primary" (click)="setActiveTab('upload')">
+              <i class="fas fa-upload"></i>
+              Upload New
+            </button>
+          </div>
+        </div>
+        <div class="section-content">
+          <app-document-list></app-document-list>
+        </div>
+      </div>
+
+      <!-- Document Upload -->
+      <div class="content-section" *ngIf="activeTab === 'upload'">
+        <div class="section-header">
+          <h2>Upload Documents</h2>
+          <div class="section-actions">
+            <button class="btn btn-secondary" (click)="setActiveTab('documents')">
+              <i class="fas fa-file-alt"></i>
+              View Documents
+            </button>
+          </div>
+        </div>
+        <div class="section-content">
+          <app-document-upload></app-document-upload>
+        </div>
+      </div>
+
+      <!-- User Management -->
+      <div class="content-section" *ngIf="activeTab === 'users'">
+        <app-user-management></app-user-management>
+      </div>
+
+      <!-- Categories (Admin/Manager only) -->
+      <div class="content-section" *ngIf="activeTab === 'categories'">
+        <div class="section-header">
+          <h2>Category Management</h2>
+          <div class="section-actions">
+            <button class="btn btn-success" (click)="createCategory()">
+              <i class="fas fa-plus"></i>
+              New Category
+            </button>
+          </div>
+        </div>
+        <div class="section-content">
+          <p>Category management functionality will be implemented here.</p>
+        </div>
+      </div>
+
+
+
+      <!-- Reports (Admin/Manager only) -->
+      <div class="content-section" *ngIf="activeTab === 'reports'">
+        <div class="section-header">
+          <h2>Reports & Analytics</h2>
+          <div class="section-actions">
+            <button class="btn btn-warning" (click)="generateReport()">
+              <i class="fas fa-chart-line"></i>
+              Generate Report
+            </button>
+          </div>
+        </div>
+        <div class="section-content">
+          <p>Reports and analytics functionality will be implemented here.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
